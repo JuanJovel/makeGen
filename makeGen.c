@@ -174,7 +174,7 @@ static void printUsage() {
  */
 static void printHeader(FILE *makeFile) {
   fprintf(makeFile, "# Automatically generated makefile\n");
-  fprintf(makeFile, "# Generated using makeFileGen by Juan Jovel\n");
+  fprintf(makeFile, "# Generated using makeGen by Juan Jovel\n");
   fprintf(makeFile, "\n");
 }
 
