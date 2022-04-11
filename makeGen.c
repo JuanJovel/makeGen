@@ -26,7 +26,6 @@
 #define MIN_ARGS 4
 #define SOURCE_FLAG_NOT_FOUND -1
 #define CFLAGS_FLAG_LOCATION 2
-#define FLAG_LENGTH 2
 #define MAKEFILE_NAME "makefile"
 #define CFLAGS_FLAG "-f"
 #define SOURCE_FLAG "-s"
@@ -127,7 +126,7 @@ static void validateInvocation(char **argv) {
 
   // Argument at index 2 should always be 2 chars long
   // and be the -f flag for a valid invocation.
-  if (strncmp(argv[CFLAGS_FLAG_LOCATION], CFLAGS_FLAG, FLAG_LENGTH) != 0) {
+  if (strcmp(argv[CFLAGS_FLAG_LOCATION], CFLAGS_FLAG) != 0) {
     printf("Invalid invocation.\n");
     printf("Error: No flags found.\n");
     printUsage();
@@ -146,7 +145,7 @@ static int findSourceFlag(int argc, char **argv) {
   // Get the source flag location.
   int sourceFlagIdx = SOURCE_FLAG_NOT_FOUND;
   for (int i = 3; i < argc; i++) {
-    if (strncmp(argv[i], SOURCE_FLAG, FLAG_LENGTH) == 0) {
+    if (strcmp(argv[i], SOURCE_FLAG) == 0) {
       sourceFlagIdx = i;
       break;
     }
