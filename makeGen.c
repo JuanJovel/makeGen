@@ -26,7 +26,7 @@
 #define MIN_ARGS 4
 #define SOURCE_FLAG_NOT_FOUND -1
 #define CFLAGS_FLAG_LOCATION 2
-#define MAKEFILE_NAME "makefile"
+#define MAKEFILE_NAME "Makefile"
 #define CFLAGS_FLAG "-f"
 #define SOURCE_FLAG "-s"
 
