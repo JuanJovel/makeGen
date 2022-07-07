@@ -24,20 +24,24 @@
 
 /* Some macros to make the code more readable. */
 #define MIN_ARGS 4
-#define SOURCE_FLAG_NOT_FOUND -1
+#define FLAG_NOT_FOUND -1
 #define CFLAGS_FLAG_LOCATION 2
 #define MAKEFILE_NAME "Makefile"
 #define CFLAGS_FLAG "-f"
 #define SOURCE_FLAG "-s"
+#define COMPILER_FLAG "-cc"
 
 /** Helper function declarations. */
 static void printUsage();
 static void validateInvocation(char **argv);
-static int findSourceFlag(int argc, char **argv);
+__attribute__((deprecated, unused)) static int findSourceFlag(int argc,
+                                                              char **argv);
 static bool makeFileExists();
 static void printHeader(FILE *makeFile);
 static void printRules(FILE *makeFile, char *executableName);
 static void alertSuccess();
+static void findFlags(int argc, char **argv, int *sourceFlagIdx,
+                      int *compilerFlagIdx);
 
 /**
  * Main function for make file generator.
@@ -53,11 +57,27 @@ int main(int argc, char **argv) {
   // Validate the invocation.
   validateInvocation(argv);
 
-  // Find the beginning of the source files.
-  int sourceFlagIdx = findSourceFlag(argc, argv);
+  int sourceFlagIdx, compilerFlagIdx;
+
+  // Find the flags, if they exist.
+  findFlags(argc, argv, &sourceFlagIdx, &compilerFlagIdx);
+  char *compiler;
+
+  // If the compiler flag is found, set the compiler.
+  if (compilerFlagIdx != FLAG_NOT_FOUND && compilerFlagIdx + 1 < argc) {
+    // The compiler flag is present the compiler must be specified in the next
+    // argument.
+    compiler = argv[compilerFlagIdx + 1];
+  }
+
+  // If the compiler flag is not found, or the compiler is not specified, set
+  // the compiler to gcc.
+  else {
+    compiler = "gcc";
+  }
 
   // If there are no source files, exit.
-  if (sourceFlagIdx == SOURCE_FLAG_NOT_FOUND) {
+  if (sourceFlagIdx == FLAG_NOT_FOUND) {
     printf("Invalid invocation.\n");
     printf("Error: No source files flag \"-s\" found.\n");
     printUsage();
@@ -91,7 +111,7 @@ int main(int argc, char **argv) {
   printHeader(makeFile);
 
   // Print compiler and CFLAGS definitions
-  fprintf(makeFile, "CC=gcc\n");
+  fprintf(makeFile, "CC=%s\n", compiler);
   fprintf(makeFile, "CFLAGS=");
 
   // Print the user specified CFLAGS.
@@ -102,7 +122,8 @@ int main(int argc, char **argv) {
 
   // Print the source files.
   fprintf(makeFile, "TARGETS=");
-  for (int i = sourceFlagIdx + 1; i < argc; i++) {
+  int sourceEnd = compilerFlagIdx == FLAG_NOT_FOUND ? argc : compilerFlagIdx;
+  for (int i = sourceFlagIdx + 1; i < sourceEnd; i++) {
     fprintf(makeFile, "%s ", argv[i]);
   }
 
@@ -134,16 +155,34 @@ static void validateInvocation(char **argv) {
   }
 }
 
+static void findFlags(int argc, char **argv, int *sourceFlagIdx,
+                      int *compilerFlagIdx) {
+  *sourceFlagIdx = FLAG_NOT_FOUND;
+  *compilerFlagIdx = FLAG_NOT_FOUND;
+  for (int i = 0; i < argc; i++) {
+    if (strcmp(argv[i], SOURCE_FLAG) == 0 && *sourceFlagIdx == FLAG_NOT_FOUND) {
+      *sourceFlagIdx = i;
+    }
+    if (strcmp(argv[i], COMPILER_FLAG) == 0 &&
+        *sourceFlagIdx != FLAG_NOT_FOUND &&
+        *compilerFlagIdx == FLAG_NOT_FOUND) {
+      *compilerFlagIdx = i;
+    }
+  }
+}
+
 /**
+ * @deprecated
  * Find the source flag in the given arguments, if it exists.
  * @param argc The number of arguments.
  * @param argv The arguments.
  * @return The index of the source flag, or -1 if it does not exist.
  */
-static int findSourceFlag(int argc, char **argv) {
+__attribute__((deprecated, unused)) static int findSourceFlag(int argc,
+                                                              char **argv) {
 
   // Get the source flag location.
-  int sourceFlagIdx = SOURCE_FLAG_NOT_FOUND;
+  int sourceFlagIdx = FLAG_NOT_FOUND;
   for (int i = 3; i < argc; i++) {
     if (strcmp(argv[i], SOURCE_FLAG) == 0) {
       sourceFlagIdx = i;
@@ -165,7 +204,9 @@ static bool makeFileExists() { return access(MAKEFILE_NAME, F_OK) != -1; }
  */
 static void printUsage() {
   printf("Usage:\n");
-  printf("makeGen {executableName} -f {CFLAGS} -s {SOURCE FILES}\n");
+  printf("makeGen {executableName} -f {CFLAGS} -s {SOURCE FILES} [-cc {desired "
+         "compiler}]\n");
+  printf("Fields in brackets are optional.\n");
 }
 
 /**
